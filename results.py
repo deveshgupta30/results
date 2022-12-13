@@ -1,6 +1,7 @@
 import mysql.connector
 import maskpass
 import os
+from tabulate import tabulate
 
 def addSubject():
     os.system('cls')
@@ -52,6 +53,8 @@ def viewStudentOrSubject(a):
             print("\nSorted alphabetically.")
             mycursor.execute("SELECT * FROM STUDENTS ORDER BY NAME ASC")
             myresult = mycursor.fetchall()
+            head=['name','regno','phno','email','maths','science','english','holiday']
+            print(tabulate(myresult, headers=head, tablefmt="grid"))
             temp=1
             for x in myresult:
                 print("{}. {}, Reg No.: {}".format(temp,x[0],x[1]))
@@ -71,9 +74,9 @@ def viewStudentOrSubject(a):
     input("Press any key to go to main menu.")
     menu()
 
-def addOrModifyMarks(a):
+def addOrModifyMarks(n):
     os.system('cls')
-    if a==0:
+    if n==0:
         print("Add marks".center(40))
         regNo = input("Enter Registration Number of the student: ")
         if regNo!='':
@@ -89,13 +92,44 @@ def addOrModifyMarks(a):
                 else:
                     for i in myresult[4:]:
                         a=input("Enter marks for {}:".format(i[0]))
-                        if a!='':
+                        if a=='' or int(a)<0 or int(a)>100:
+                            input("No input detected or invalid marks. \nMake sure the marks is <= 100 and >= 0.\nPress any key to go to main menu.")
+                            menu()
+                        else:
                             mycursor.execute("UPDATE STUDENTS SET {} = {} WHERE REG_NO=\"{}\"".format(i[0], int(a), regNo))
                             mydb.commit()
                             print("{} marks added for {}.".format(i[0], temp[0][0]))
-                        else:
-                            input("No input detected. Press any key to go to main menu.")
-                            menu()
+            else:
+                print("No student found!")
+        else:
+            print("No input detected.")
+    if n==1:
+        print("Modify marks".center(40))
+        regNo = input("Enter Registration Number of the student: ")
+        if regNo!='':
+            mycursor.execute(('SELECT NAME FROM STUDENTS WHERE REG_NO = "')+(regNo)+('"'))
+            temp = mycursor.fetchall()
+            if temp!=[]:
+                print("\nModifying marks of {}.\n".format(temp[0][0]))
+                subId = input("Enter the subject name/ID to update: ")
+                mycursor.execute("DESCRIBE STUDENTS")
+                myresult = mycursor.fetchall()
+                print(myresult)
+                if subId=='':
+                    input("No input detected .\nPress Enter to go to main menu.")
+                    menu()
+                elif subId in myresult[4:][0]:
+                    a=input("Enter marks for {}:".format(subId))
+                    if a=='' or int(a)<0 or int(a)>100:
+                        input("No input detected or invalid marks. \nMake sure the marks is <= 100 and >= 0.\nPress Enter to go to main menu.")
+                        menu()
+                    else:
+                        mycursor.execute("UPDATE STUDENTS SET {} = {} WHERE REG_NO=\"{}\"".format(subId, int(a), regNo))
+                        mydb.commit()
+                        print("{} marks modified for {}.".format(subId, temp[0][0]))
+                else:
+                    input("Subject not found. \nPress Enter to go to Main Menu to add subjects.")
+                    menu()
             else:
                 print("No student found!")
         else:
@@ -162,7 +196,66 @@ def deleteStudent():
         input("No input detected, press any key to go to main menu.")
         os.system('color 7')
         mennu()
-        
+
+def viewResult():
+    os.system('cls')
+    print("View Result".center(40))
+    n=input("1. View results for all students.\n2. View result for a specific student.\nEnter choice: ")
+    if n=='1':
+        os.system('cls')
+        print("View Result - All".center(40))
+        mycursor = mydb.cursor()
+        mycursor.execute("SELECT COUNT(*) FROM STUDENTS")
+        myresult = mycursor.fetchall()
+        mycursor.execute("DESCRIBE STUDENTS")
+        myresult2 = mycursor.fetchall()
+        if myresult[0][0]!=0:
+            head = ['Name','Reg. No.','Ph. No.','Email ID']
+            temp = ''
+            for i in myresult2[4:]:
+                head.append(i[0])
+            for ele in head[4:]:
+                temp += ','+ele
+            print("\nSorted alphabetically.")
+            mycursor.execute("SELECT NAME, REG_NO, PH_NO, EMAIL {}  FROM STUDENTS ORDER BY NAME ASC".format(temp))
+            myresult = mycursor.fetchall()
+            print(tabulate(myresult, headers=head, tablefmt="grid"))
+        else:
+            print("No students found.")
+        input("Press Enter to go to main menu.")
+        menu()
+    elif n=='2':
+        regNo = input("Enter student's registration number: ")
+        if regNo!='':
+            mycursor = mydb.cursor()
+            mycursor.execute(('SELECT NAME FROM STUDENTS WHERE REG_NO = "')+(regNo)+('"'))
+            name = mycursor.fetchall()
+            if name==[]:
+                input("No student found with Registration Number {}.\nPress Enter to go to Main Menu.".format(regNo))
+                menu()
+            else:
+                mycursor = mydb.cursor()
+                mycursor.execute("SELECT COUNT(*) FROM STUDENTS")
+                myresult = mycursor.fetchall()
+                mycursor.execute("DESCRIBE STUDENTS")
+                myresult2 = mycursor.fetchall()
+                head = ['Name','Reg. No.','Ph. No.','Email ID']
+                temp = ''
+                for i in myresult2[4:]:
+                    head.append(i[0])
+                for ele in head[4:]:
+                    temp += ','+ele
+                mycursor.execute("SELECT NAME, REG_NO, PH_NO, EMAIL {}  FROM STUDENTS WHERE REG_NO = '{}'".format(temp, regNo))
+                myresult = mycursor.fetchall()
+                print(tabulate(myresult, headers=head, tablefmt="grid"))
+        else:
+            print("No input detected."
+    else:
+        input("Wrong choice. Press Enter to go to Main Menu.")
+        menu()
+    input("Press Enter to go to main menu.")
+    menu()
+    
 def menu():
     while True:
         os.system('cls')
@@ -176,7 +269,8 @@ def menu():
         print("6. Modify marks")
         print("7. Delete Subject")
         print("8. Delete Student")
-        print("9. Exit")
+        print("9. View result")
+        print("10. Exit")
         ch=input("Enter your choice: " )
         if ch!="":
             break
@@ -199,6 +293,8 @@ def menu():
         deleteSubject()
     if ch=='8':
         deleteStudent()
+    if ch=='9':
+        viewResult()
     
         
         
@@ -223,7 +319,7 @@ while(True):
         )
         bit = True
         mycursor = mydb.cursor()
-        mycursor.execute("CREATE TABLE IF NOT EXISTS STUDENTS(NAME VARCHAR(100), REG_NO VARCHAR(10) PRIMARY KEY, PH_NO VARCHAR(10), EMAIL VARCHAR(200))")
+        mycursor.execute("CREATE TABLE IF NOT EXISTS STUDENTS(NAME VARCHAR(100), REG_NO VARCHAR(10) PRIMARY KEY, PH_NO VARCHAR(10), EMAIL VARCHAR(200), GRADE VARCHAR(3))")
         menu()
         break      
     
