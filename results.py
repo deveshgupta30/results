@@ -2,8 +2,9 @@ import mysql.connector
 import maskpass
 import os
 from tabulate import tabulate
+import matplotlib.pyplot as plt
 
-def calculateResult():
+def calculateResult(t):
     mycursor = mydb.cursor()
     mycursor.execute("SELECT COUNT(*) FROM STUDENTS")
     myresult = mycursor.fetchall()
@@ -46,6 +47,45 @@ def calculateResult():
             mydb.commit()
     else:
         print("")
+    if t=='stats':
+        os.system('cls')
+        print("View stats".center(40))
+        choice=input("\n1. View stats for a specific student.\nEnter choice: ")
+        if choice=='1':
+            regNo = input("Enter Registration Number of the student: ")
+            temp = ""
+            if regNo!='':
+                if head!=[]:
+                    for ele in head:
+                        temp += ', '+ele
+                else:
+                    input("No subject found. Press Enter to go to main menu and add a subject.")
+                    menu()
+                mycursor.execute(('SELECT NAME {} FROM STUDENTS WHERE REG_NO = "'.format(temp))+(regNo)+('"'))
+                student = mycursor.fetchall()
+                if student!=[]:
+                    print(student)
+                    yAxis=[]
+                    for i in student[0][1:]:
+                        if i!=None:
+                            yAxis.append(i)
+                        else:
+                            yAxis.append(0)
+                    xAxis = head
+                    plt.bar(xAxis,yAxis)
+                    plt.title(student[0][0])
+                    plt.xlabel("Subjects")
+                    plt.ylabel("Marks")
+                    plt.show()
+                else:
+                    print("No student found!")
+            else:
+                print("No input detected.")
+        else:
+            print("No input detected.")
+        input("Press Enter to go to main menu.")
+        menu()
+        
     
 def addSubject():
     os.system('cls')
@@ -252,7 +292,7 @@ def deleteStudent():
 def viewResult():
     os.system('cls')
     print("View Result".center(40))
-    calculateResult()
+    calculateResult(True)
     n=input("1. View results for all students.\n2. View result for a specific student.\nEnter choice: ")
     if n=='1':
         os.system('cls')
@@ -327,7 +367,8 @@ def menu():
         print("7. Delete Subject")
         print("8. Delete Student")
         print("9. View result")
-        print("10. Exit")
+        print("10: View stats")
+        print("11. Exit")
         ch=input("Enter your choice: " )
         if ch!="":
             break
@@ -353,6 +394,8 @@ def menu():
     if ch=='9':
         viewResult()
     if ch=='10':
+        calculateResult('stats')
+    if ch=='11':
         quit()
     
         
