@@ -50,7 +50,7 @@ def calculateResult(t):
     if t=='stats':
         os.system('cls')
         print("View stats".center(40))
-        choice=input("\n1. View stats for a specific student.\nEnter choice: ")
+        choice=input("\n1. View stats for a specific student.\n2. View whole class aggregate result.\nEnter choice: ")
         if choice=='1':
             regNo = input("Enter Registration Number of the student: ")
             temp = ""
@@ -64,7 +64,6 @@ def calculateResult(t):
                 mycursor.execute(('SELECT NAME {} FROM STUDENTS WHERE REG_NO = "'.format(temp))+(regNo)+('"'))
                 student = mycursor.fetchall()
                 if student!=[]:
-                    print(student)
                     yAxis=[]
                     for i in student[0][1:]:
                         if i!=None:
@@ -81,6 +80,33 @@ def calculateResult(t):
                     print("No student found!")
             else:
                 print("No input detected.")
+        elif choice=='2':
+            os.system('cls')
+            print("View Stats - All".center(40))
+            mycursor = mydb.cursor()
+            mycursor.execute("SELECT COUNT(*) FROM STUDENTS")
+            myresult = mycursor.fetchall()
+            mycursor.execute("DESCRIBE STUDENTS")
+            myresult2 = mycursor.fetchall()
+            if myresult[0][0]!=0 and len(myresult2)!=0:
+                mycursor.execute('SELECT GRADE FROM STUDENTS')
+                students = mycursor.fetchall()
+                grade = []
+                head = []
+                num = []
+                for i in students:
+                    grade.append(i[0])
+                for i in grade:
+                    if i not in head:
+                        num.append(grade.count(i))
+                        head.append(i)
+                plt.title("Total students: {}".format(myresult[0][0]))
+                plt.pie(num, labels=head)
+                plt.show()
+            else:
+                print("No students/subject found.")
+            input("Press Enter to go to main menu.")
+            menu()
         else:
             print("No input detected.")
         input("Press Enter to go to main menu.")
